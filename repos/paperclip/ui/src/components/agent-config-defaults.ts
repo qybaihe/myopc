@@ -1,0 +1,32 @@
+import type { CreateConfigValues } from "@paperclipai/adapter-utils";
+import { DEFAULT_OPENCODE_LOCAL_MODEL } from "@paperclipai/adapter-opencode-local";
+
+export const defaultCreateValues: CreateConfigValues = {
+  adapterType: "opencode_local",
+  cwd: "",
+  instructionsFilePath: "",
+  promptTemplate: "",
+  model: DEFAULT_OPENCODE_LOCAL_MODEL,
+  thinkingEffort: "",
+  chrome: false,
+  dangerouslySkipPermissions: true,
+  search: false,
+  fastMode: false,
+  dangerouslyBypassSandbox: false,
+  command: "",
+  args: "",
+  extraArgs: "",
+  envVars: "",
+  envBindings: {},
+  url: "",
+  bootstrapPrompt: "",
+  payloadTemplateJson: "",
+  workspaceStrategyType: "project_primary",
+  workspaceBaseRef: "",
+  workspaceBranchTemplate: "",
+  worktreeParentDir: "",
+  runtimeServicesJson: "",
+  maxTurnsPerRun: 1000,
+  heartbeatEnabled: false,
+  intervalSec: 300,
+};

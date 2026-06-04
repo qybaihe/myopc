@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IOPC Layout Demo</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg-surface: #161922;
+    --bg-elevated: #1c1f2e;
+    --bg-hover: #252838;
+    --border: #2a2d3e;
+    --text: #e2e4eb;
+    --text-secondary: #8b8fa3;
+    --text-muted: #5c6078;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --green: #00cec9;
+    --green-bg: rgba(0,206,201,0.12);
+    --yellow: #fdcb6e;
+    --yellow-bg: rgba(253,203,110,0.12);
+    --red: #ff6b6b;
+    --red-bg: rgba(255,107,107,0.12);
+    --blue: #74b9ff;
+    --blue-bg: rgba(116,185,255,0.12);
+    --sidebar-w: 240px;
+    --topbar-h: 56px;
+    --bottombar-h: 32px;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+
+  /* === Topbar === */
+  .topbar {
+    height: var(--topbar-h); background: var(--bg-surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 32px; position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  }
+  .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; color: var(--accent-light); }
+  .logo span { color: var(--text); font-weight: 400; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-secondary);
+    transition: all .15s; border: none; background: none; font-family: inherit;
+  }
+  .nav-tab:hover { background: var(--bg-hover); color: var(--text); }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--bg-elevated); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--text-secondary);
+  }
+  .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #fff; }
+
+  /* === Layout Shell === */
+  .shell { display: flex; margin-top: var(--topbar-h); height: calc(100vh - var(--topbar-h) - var(--bottombar-h)); }
+
+  /* === Sidebar === */
+  .sidebar {
+    width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--bg-surface);
+    border-right: 1px solid var(--border); padding: 16px 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+  }
+  .sidebar-search {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px;
+    background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-muted); font-size: 13px; margin-bottom: 8px;
+  }
+  .sidebar-item {
+    padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-secondary);
+    display: flex; align-items: center; gap: 10px; transition: all .15s;
+  }
+  .sidebar-item:hover { background: var(--bg-hover); color: var(--text); }
+  .sidebar-item.active { background: var(--accent); color: #fff; }
+  .sidebar-item .icon { width: 18px; text-align: center; }
+  .sidebar-section { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); padding: 16px 12px 4px; }
+  .sidebar-btn {
+    margin-top: auto; padding: 10px; border-radius: 6px; background: var(--accent); color: #fff;
+    border: none; cursor: pointer; font-size: 13px; font-weight: 500; font-family: inherit; text-align: center;
+  }
+  .sidebar-btn:hover { opacity: .9; }
+  .sidebar-nested { padding-left: 28px; }
+
+  /* === Main Content === */
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 600; }
+  .page-actions { display: flex; gap: 8px; }
+  .btn {
+    padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg-elevated); color: var(--text); font-family: inherit; transition: all .15s;
+  }
+  .btn:hover { background: var(--bg-hover); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+
+  /* === Metric Cards === */
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .metric-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+  }
+  .metric-label { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  .metric-value { font-size: 28px; font-weight: 700; }
+  .metric-change { font-size: 12px; margin-top: 6px; }
+  .metric-change.up { color: var(--green); }
+  .metric-change.down { color: var(--red); }
+
+  /* === Content Panels === */
+  .panel { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .panel-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .panel-title .badge { font-size: 11px; background: var(--bg-elevated); padding: 2px 8px; border-radius: 10px; color: var(--text-secondary); font-weight: 400; }
+  .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .half-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* === Task List === */
+  .task-item {
+    display: flex; align-items: center; justify-content: space-between; padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-info { display: flex; flex-direction: column; gap: 4px; }
+  .task-name { font-size: 13px; }
+  .task-meta { font-size: 11px; color: var(--text-muted); }
+  .progress-bar { width: 120px; height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .progress-fill.green { background: var(--green); }
+  .progress-fill.yellow { background: var(--yellow); }
+  .progress-fill.blue { background: var(--blue); }
+  .task-percent { font-size: 12px; color: var(--text-secondary); min-width: 36px; text-align: right; }
+
+  /* === Approval Cards === */
+  .approval-card { padding: 12px; background: var(--bg-elevated); border-radius: 6px; margin-bottom: 8px; }
+  .approval-card:last-child { margin-bottom: 0; }
+  .approval-header { font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .approval-meta { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+  .approval-actions { display: flex; gap: 6px; }
+  .approval-actions .btn { padding: 4px 12px; font-size: 12px; }
+
+  /* === Server Card === */
+  .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .server-card {
+    padding: 16px; background: var(--bg-elevated); border-radius: 6px; border: 1px solid var(--border);
+  }
+  .server-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .server-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-dot.online { background: var(--green); }
+  .status-dot.offline { background: var(--red); }
+  .status-dot.warning { background: var(--yellow); }
+
+  /* === Project Cards === */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .project-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+    cursor: pointer; transition: all .15s;
+  }
+  .project-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .project-name { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .project-domain { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+  .project-stats { display: flex; gap: 16px; font-size: 12px; color: var(--text-secondary); }
+  .project-agents { margin-top: 12px; display: flex; gap: 6px; }
+
+  /* === Employee Cards === */
+  .employee-item {
+    display: flex; align-items: center; padding: 16px 20px; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px;
+    gap: 16px;
+  }
+  .employee-avatar {
+    width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 600; flex-shrink: 0;
+  }
+  .employee-info { flex: 1; }
+  .employee-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .employee-model { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .employee-task { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .employee-budget { font-size: 12px; color: var(--text-muted); }
+  .employee-actions { display: flex; gap: 6px; }
+
+  /* === Skill Cards === */
+  .skill-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+  }
+  .skill-icon { font-size: 28px; margin-bottom: 10px; }
+  .skill-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .skill-level { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-bottom: 8px; }
+  .skill-level.l1 { background: var(--blue-bg); color: var(--blue); }
+  .skill-level.l2 { background: var(--green-bg); color: var(--green); }
+  .skill-level.l3 { background: rgba(108,92,231,0.12); color: var(--accent-light); }
+  .skill-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
+  .skill-reqs { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .skill-footer { display: flex; justify-content: space-between; align-items: center; }
+
+  /* === Knowledge Layout === */
+  .knowledge-layout { display: flex; gap: 0; height: calc(100vh - var(--topbar-h) - var(--bottombar-h) - 48px); }
+  .doc-tree {
+    width: 200px; min-width: 200px; background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px; overflow-y: auto; margin-right: 16px;
+  }
+  .tree-item { padding: 6px 8px; font-size: 12px; color: var(--text-secondary); cursor: pointer; border-radius: 4px; display: flex; align-items: center; gap: 6px; }
+  .tree-item:hover { background: var(--bg-hover); color: var(--text); }
+  .tree-item.active { background: var(--accent); color: #fff; }
+  .tree-folder { color: var(--text-muted); font-size: 11px; }
+  .doc-editor {
+    flex: 1; background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; overflow-y: auto;
+  }
+  .doc-editor h1 { font-size: 24px; font-weight: 600; margin-bottom: 16px; }
+  .doc-editor p { font-size: 14px; line-height: 1.8; color: var(--text-secondary); margin-bottom: 12px; }
+  .doc-editor blockquote {
+    border-left: 3px solid var(--accent); padding: 12px 16px; margin: 16px 0;
+    background: var(--bg-elevated); border-radius: 0 6px 6px 0; font-size: 13px; color: var(--text-secondary);
+  }
+  .ai-reply {
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin: 16px 0;
+  }
+  .ai-reply-label { font-size: 11px; color: var(--accent-light); margin-bottom: 6px; font-weight: 500; }
+  .ai-reply-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .ai-reply-actions { margin-top: 10px; display: flex; gap: 6px; }
+
+  /* === Analytics Chart Placeholder === */
+  .chart-placeholder {
+    height: 240px; background: var(--bg-elevated); border-radius: 6px; display: flex;
+    align-items: flex-end; padding: 20px; gap: 6px;
+  }
+  .chart-bar {
+    flex: 1; border-radius: 4px 4px 0 0; transition: height .3s;
+  }
+  .page-rank-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .page-rank-item:last-child { border-bottom: none; }
+  .page-rank-path { color: var(--text); }
+  .page-rank-val { color: var(--text-secondary); }
+
+  /* === Settings === */
+  .settings-group { margin-bottom: 24px; }
+  .settings-group-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+  .settings-row {
+    display: flex; justify-content: space-between; align-items: center; padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 13px; }
+  .settings-label small { display: block; color: var(--text-muted); font-size: 11px; margin-top: 2px; }
+  .settings-value { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+  .toggle {
+    width: 40px; height: 22px; background: var(--bg-elevated); border-radius: 11px; cursor: pointer;
+    position: relative; border: 1px solid var(--border);
+  }
+  .toggle::after {
+    content: ''; width: 16px; height: 16px; background: var(--text-muted); border-radius: 50%;
+    position: absolute; top: 2px; left: 2px; transition: all .15s;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle.on::after { left: 20px; background: #fff; }
+
+  /* === Detail Tabs === */
+  .detail-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+  }
+  .detail-back { cursor: pointer; color: var(--text-muted); font-size: 14px; }
+  .detail-back:hover { color: var(--text); }
+  .detail-title { font-size: 18px; font-weight: 600; flex: 1; }
+  .detail-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .detail-tab {
+    padding: 10px 20px; font-size: 13px; color: var(--text-secondary); cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all .15s;
+  }
+  .detail-tab:hover { color: var(--text); }
+  .detail-tab.active { color: var(--accent-light); border-bottom-color: var(--accent); }
+  .detail-content { min-height: 200px; }
+
+  /* === Bottom Bar === */
+  .bottombar {
+    height: var(--bottombar-h); background: var(--bg-surface); border-top: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 20px; gap: 24px; font-size: 11px; color: var(--text-muted);
+    position: fixed; bottom: 0; left: 0; right: 0;
+  }
+  .bottombar .status-item { display: flex; align-items: center; gap: 6px; }
+
+  /* === Tag / Badge === */
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px;
+  }
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.yellow { background: var(--yellow-bg); color: var(--yellow); }
+  .tag.red { background: var(--red-bg); color: var(--red); }
+  .tag.blue { background: var(--blue-bg); color: var(--blue); }
+
+  /* View toggle */
+  .view-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .view-toggle button {
+    padding: 6px 12px; font-size: 12px; background: var(--bg-elevated); border: none; color: var(--text-secondary);
+    cursor: pointer; font-family: inherit;
+  }
+  .view-toggle button.active { background: var(--accent); color: #fff; }
+
+  /* Subtle scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo">IOPC <span>Console</span></div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-page="dashboard">仪表盘</button>
+    <button class="nav-tab" data-page="projects">项目</button>
+    <button class="nav-tab" data-page="employees">员工</button>
+    <button class="nav-tab" data-page="skills">Skills</button>
+    <button class="nav-tab" data-page="knowledge">知识</button>
+    <button class="nav-tab" data-page="analytics">数据</button>
+    <button class="nav-tab" data-page="settings">设置</button>
+  </div>
+  <div class="topbar-right">
+    <div class="icon-btn" title="通知">🔔</div>
+    <div class="avatar">BH</div>
+  </div>
+</div>
+
+<!-- Shell -->
+<div class="shell">
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar"></div>
+
+  <!-- Main Content -->
+  <div class="main" id="mainContent"></div>
+
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottombar">
+  <div class="status-item"><div class="status-dot online"></div> 服务器: 3/4 在线</div>
+  <div class="status-item">🤖 Agent: 2 运行中</div>
+  <div class="status-item">⚠️ 未读告警: 1</div>
+  <div style="margin-left:auto;">IOPC v0.1 Demo</div>
+</div>
+
+<script>
+// === Page Data ===
+const sidebars = {
+  dashboard: `
+    <div class="sidebar-item active"><span class="icon">📊</span> 概览</div>
+    <div class="sidebar-item"><span class="icon">⚡</span> 快捷操作</div>
+  `,
+  projects: `
+    <div class="sidebar-search">🔍 搜索项目</div>
+    <div class="sidebar-item active"><span class="icon">📁</span> 全部项目</div>
+    <div class="sidebar-item"><span class="icon">📁</span> SaaS</div>
+    <div class="sidebar-item"><span class="icon">📁</span> 电商</div>
+    <div class="sidebar-item"><span class="icon">📁</span> 内容站</div>
+    <button class="sidebar-btn">+ 新建项目</button>
+  `,
+  employees: `
+    <div class="sidebar-search">🔍 搜索员工</div>
+    <div class="sidebar-item active"><span class="icon">📁</span> 全部</div>
+    <div class="sidebar-item"><span class="icon">🟢</span> 运行中</div>
+    <div class="sidebar-item"><span class="icon">🟡</span> 处理中</div>
+    <div class="sidebar-item"><span class="icon">⚪</span> 已暂停</div>
+    <button class="sidebar-btn">+ 招聘员工</button>
+  `,
+  skills: `
+    <div class="sidebar-search">🔍 搜索 Skill</div>
+    <div class="sidebar-item active"><span class="icon">🏪</span> 商店</div>
+    <div class="sidebar-item"><span class="icon">📦</span> 已安装</div>
+    <div class="sidebar-section">分类</div>
+    <div class="sidebar-item"><span class="icon">⚡</span> L1 原子</div>
+    <div class="sidebar-item"><span class="icon">🔧</span> L2 复合</div>
+    <div class="sidebar-item"><span class="icon">🤖</span> L3 角色</div>
+  `,
+  knowledge: `
+    <div class="sidebar-search">🔍 搜索文档</div>
+    <div class="sidebar-section">文档</div>
+    <div class="sidebar-item active"><span class="icon">📁</span> 帮助中心</div>
+    <div class="sidebar-item sidebar-nested"><span class="icon">📄</span> 快速入门</div>
+    <div class="sidebar-item sidebar-nested"><span class="icon">📄</span> 安装Agent</div>
+    <div class="sidebar-item sidebar-nested"><span class="icon">📄</span> 招聘员工</div>
+    <div class="sidebar-item"><span class="icon">📁</span> 项目文档</div>
+    <div class="sidebar-item"><span class="icon">📁</span> SOP</div>
+    <div class="sidebar-section">知识库</div>
+    <div class="sidebar-item"><span class="icon">📂</span> 项目知识库</div>
+    <div class="sidebar-item"><span class="icon">📋</span> 模板库</div>
+    <button class="sidebar-btn">+ 新建文档</button>
+  `,
+  analytics: `
+    <div class="sidebar-item active"><span class="icon">📊</span> 全局数据</div>
+    <div class="sidebar-section">按项目</div>
+    <div class="sidebar-item"><span class="icon">📁</span> my-saas</div>
+    <div class="sidebar-item"><span class="icon">📁</span> landing</div>
+    <div class="sidebar-item"><span class="icon">📁</span> blog</div>
+    <div class="sidebar-section">时间范围</div>
+    <div class="sidebar-item"><span class="icon">📅</span> 7 天</div>
+    <div class="sidebar-item"><span class="icon">📅</span> 30 天</div>
+  `,
+  settings: `
+    <div class="sidebar-item active"><span class="icon">👤</span> 账户</div>
+    <div class="sidebar-item"><span class="icon">🖥</span> 服务器</div>
+    <div class="sidebar-item"><span class="icon">🤖</span> AI模型</div>
+    <div class="sidebar-item"><span class="icon">🔔</span> 通知</div>
+    <div class="sidebar-item"><span class="icon">🔗</span> 集成</div>
+  `
+};
+
+const pages = {
+  dashboard: `
+    <div class="page-header">
+      <div class="page-title">仪表盘</div>
+      <button class="btn">🔄 刷新</button>
+    </div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">收入 (本月)</div>
+        <div class="metric-value">¥12,480</div>
+        <div class="metric-change up">↑ 12% vs 上月</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">访客 (本周)</div>
+        <div class="metric-value">2,847</div>
+        <div class="metric-change up">↑ 8% vs 上周</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">部署数</div>
+        <div class="metric-value">5</div>
+        <div class="metric-change up">↑ 2 本周</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">活跃员工</div>
+        <div class="metric-value">3</div>
+        <div class="metric-change" style="color:var(--text-muted)">— 无变化</div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">活跃任务 <span class="badge">4</span></div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">重构支付模块</div><div class="task-meta">Dev Agent · my-saas</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar"><div class="progress-fill green" style="width:80%"></div></div>
+            <div class="task-percent">80%</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">延迟诊断</div><div class="task-meta">Ops Agent · my-saas</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar"><div class="progress-fill yellow" style="width:40%"></div></div>
+            <div class="task-percent">40%</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">博客文章发布</div><div class="task-meta">Content Agent · blog</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar"><div class="progress-fill blue" style="width:60%"></div></div>
+            <div class="task-percent">60%</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">SSL 证书续期</div><div class="task-meta">Ops Agent · 全局</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="progress-bar"><div class="progress-fill green" style="width:95%"></div></div>
+            <div class="task-percent">95%</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">待审批 <span class="badge">2</span></div>
+        <div class="approval-card">
+          <div class="approval-header">部署 my-saas v2.3.1</div>
+          <div class="approval-meta">Dev Agent · 5 分钟前</div>
+          <div class="approval-actions">
+            <button class="btn btn-primary" style="font-size:12px;padding:4px 12px">批准</button>
+            <button class="btn" style="font-size:12px;padding:4px 12px">拒绝</button>
+          </div>
+        </div>
+        <div class="approval-card">
+          <div class="approval-header">删除旧数据库备份</div>
+          <div class="approval-meta">Ops Agent · 12 分钟前</div>
+          <div class="approval-actions">
+            <button class="btn btn-primary" style="font-size:12px;padding:4px 12px">批准</button>
+            <button class="btn" style="font-size:12px;padding:4px 12px">拒绝</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">服务器状态</div>
+      <div class="server-grid">
+        <div class="server-card">
+          <div class="server-name">prod-server-01</div>
+          <div class="server-status"><div class="status-dot online"></div> 在线 · CPU 32%</div>
+        </div>
+        <div class="server-card">
+          <div class="server-name">prod-server-02</div>
+          <div class="server-status"><div class="status-dot online"></div> 在线 · CPU 18%</div>
+        </div>
+        <div class="server-card">
+          <div class="server-name">staging-server</div>
+          <div class="server-status"><div class="status-dot online"></div> 在线 · CPU 8%</div>
+        </div>
+        <div class="server-card">
+          <div class="server-name">backup-server</div>
+          <div class="server-status"><div class="status-dot warning"></div> 告警 · 磁盘 89%</div>
+        </div>
+      </div>
+    </div>
+  `,
+
+  projects: `
+    <div class="page-header">
+      <div class="page-title">项目</div>
+      <div class="page-actions">
+        <div class="view-toggle">
+          <button class="active">卡片</button>
+          <button>列表</button>
+        </div>
+        <button class="btn btn-primary">+ 新建</button>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div class="project-card" onclick="showProjectDetail()">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="project-name">my-saas-app</div>
+          <span class="tag green">● 在线</span>
+        </div>
+        <div class="project-domain">my-saas.example.com</div>
+        <div class="project-stats">
+          <span>👥 访客 1,240/天</span>
+          <span>✓ 可用率 99.8%</span>
+        </div>
+        <div class="project-agents">
+          <span class="tag blue">🤖 Dev Agent</span>
+          <span class="tag blue">🤖 Ops Agent</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="project-name">landing-page</div>
+          <span class="tag green">● 在线</span>
+        </div>
+        <div class="project-domain">landing.example.com</div>
+        <div class="project-stats">
+          <span>👥 访客 890/天</span>
+          <span>✓ 可用率 100%</span>
+        </div>
+        <div class="project-agents">
+          <span class="tag blue">🤖 Content Agent</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="project-name">company-blog</div>
+          <span class="tag yellow">● 部署中</span>
+        </div>
+        <div class="project-domain">blog.example.com</div>
+        <div class="project-stats">
+          <span>👥 访客 430/天</span>
+          <span>✓ 可用率 99.5%</span>
+        </div>
+        <div class="project-agents">
+          <span class="tag blue">🤖 Content Agent</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div class="project-name">shop-mall</div>
+          <span class="tag red">● 离线</span>
+        </div>
+        <div class="project-domain">shop.example.com</div>
+        <div class="project-stats">
+          <span>👥 访客 0/天</span>
+          <span>✗ 可用率 0%</span>
+        </div>
+        <div class="project-agents">
+          <span style="font-size:12px;color:var(--text-muted)">无驻守员工</span>
+        </div>
+      </div>
+    </div>
+  `,
+
+  projectDetail: `
+    <div class="detail-header">
+      <span class="detail-back" onclick="showPage('projects')">← 返回</span>
+      <div class="detail-title">my-saas-app <span class="tag green" style="margin-left:8px">● 在线</span></div>
+      <button class="btn btn-primary">部署</button>
+      <button class="btn">设置</button>
+    </div>
+    <div class="detail-tabs" id="projectTabs">
+      <div class="detail-tab active" data-tab="overview">概览</div>
+      <div class="detail-tab" data-tab="deploy">部署</div>
+      <div class="detail-tab" data-tab="monitor">监控</div>
+      <div class="detail-tab" data-tab="analytics">分析</div>
+      <div class="detail-tab" data-tab="agents">员工</div>
+    </div>
+    <div class="detail-content">
+      <div class="metrics-row">
+        <div class="metric-card"><div class="metric-label">域名</div><div class="metric-value" style="font-size:16px">my-saas.example.com</div></div>
+        <div class="metric-card"><div class="metric-label">日访客</div><div class="metric-value">1,240</div></div>
+        <div class="metric-card"><div class="metric-label">可用率</div><div class="metric-value" style="color:var(--green)">99.8%</div></div>
+        <div class="metric-card"><div class="metric-label">部署版本</div><div class="metric-value" style="font-size:16px">v2.3.0</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">最近部署</div>
+        <div class="task-item"><div class="task-info"><div class="task-name">v2.3.0 · 生产环境</div><div class="task-meta">2 小时前 · Dev Agent</div></div><span class="tag green">成功</span></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">v2.2.9 · 生产环境</div><div class="task-meta">昨天 · Dev Agent</div></div><span class="tag green">成功</span></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">v2.2.8 · 生产环境</div><div class="task-meta">3天前 · 手动</div></div><span class="tag red">失败</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">驻守员工</div>
+        <div class="task-item"><div class="task-info"><div class="task-name">🤖 Dev Agent</div><div class="task-meta">Claude Sonnet · 当前: 重构支付模块</div></div><span class="tag green">运行中</span></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">🤖 Ops Agent</div><div class="task-meta">Claude Haiku · 当前: 延迟诊断</div></div><span class="tag yellow">处理中</span></div>
+      </div>
+    </div>
+  `,
+
+  employees: `
+    <div class="page-header">
+      <div class="page-title">员工</div>
+      <button class="btn btn-primary">+ 招聘</button>
+    </div>
+    <div class="employee-item">
+      <div class="employee-avatar" style="background:var(--accent)">D</div>
+      <div class="employee-info">
+        <div class="employee-name">Dev Agent <span class="tag green">● 运行中</span></div>
+        <div class="employee-model">Claude Sonnet 4 · my-saas-app</div>
+        <div class="employee-task">当前: 重构支付模块 — 80%</div>
+      </div>
+      <div class="employee-budget">¥340 / ¥500</div>
+      <div class="employee-actions">
+        <button class="btn" style="font-size:12px">详情</button>
+        <button class="btn" style="font-size:12px">暂停</button>
+        <button class="btn" style="font-size:12px">对话</button>
+      </div>
+    </div>
+    <div class="employee-item">
+      <div class="employee-avatar" style="background:var(--green)">O</div>
+      <div class="employee-info">
+        <div class="employee-name">Ops Agent <span class="tag yellow">● 处理中</span></div>
+        <div class="employee-model">Claude Haiku 4.5 · my-saas-app</div>
+        <div class="employee-task">当前: 延迟诊断 — 40%</div>
+      </div>
+      <div class="employee-budget">¥45 / ¥200</div>
+      <div class="employee-actions">
+        <button class="btn" style="font-size:12px">详情</button>
+        <button class="btn" style="font-size:12px">暂停</button>
+        <button class="btn" style="font-size:12px">对话</button>
+      </div>
+    </div>
+    <div class="employee-item">
+      <div class="employee-avatar" style="background:var(--blue)">C</div>
+      <div class="employee-info">
+        <div class="employee-name">Content Agent <span class="tag green">● 运行中</span></div>
+        <div class="employee-model">Claude Sonnet 4 · blog</div>
+        <div class="employee-task">当前: 撰写周报 — 60%</div>
+      </div>
+      <div class="employee-budget">¥120 / ¥300</div>
+      <div class="employee-actions">
+        <button class="btn" style="font-size:12px">详情</button>
+        <button class="btn" style="font-size:12px">暂停</button>
+        <button class="btn" style="font-size:12px">对话</button>
+      </div>
+    </div>
+    <div class="employee-item" style="opacity:.5">
+      <div class="employee-avatar" style="background:var(--text-muted)">S</div>
+      <div class="employee-info">
+        <div class="employee-name">SEO Agent <span class="tag" style="background:var(--bg-elevated);color:var(--text-muted)">⚪ 已暂停</span></div>
+        <div class="employee-model">Claude Haiku 4.5 · landing</div>
+        <div class="employee-task">暂停前: 关键词分析</div>
+      </div>
+      <div class="employee-budget">¥0 / ¥100</div>
+      <div class="employee-actions">
+        <button class="btn" style="font-size:12px">详情</button>
+        <button class="btn btn-primary" style="font-size:12px">恢复</button>
+      </div>
+    </div>
+  `,
+
+  skills: `
+    <div class="page-header">
+      <div class="page-title">Skill 商店</div>
+      <div class="page-actions">
+        <div class="view-toggle">
+          <button class="active">全部</button>
+          <button>L1</button>
+          <button>L2</button>
+          <button>L3</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-grid">
+      <div class="skill-card">
+        <div class="skill-icon">🤖</div>
+        <div class="skill-name">dev-engineer</div>
+        <span class="skill-level l3">L3 角色 Skill</span>
+        <div class="skill-desc">持续开发、代码审查、Bug 修复。全栈开发角色，可独立接管项目开发流程。</div>
+        <div class="skill-reqs">需要: LiteLLM, Paperclip, Git</div>
+        <div class="skill-footer">
+          <button class="btn btn-primary" style="font-size:12px">安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">128 人使用</span>
+        </div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🚀</div>
+        <div class="skill-name">launch-product</div>
+        <span class="skill-level l2">L2 复合 Skill</span>
+        <div class="skill-desc">从0到上线完整流程：域名配置、部署、SSL、监控、内容初始化。</div>
+        <div class="skill-reqs">需要: Traefik, Uptime Kuma, LiteLLM</div>
+        <div class="skill-footer">
+          <button class="btn btn-primary" style="font-size:12px">安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">256 人使用</span>
+        </div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🔍</div>
+        <div class="skill-name">seo-audit</div>
+        <span class="skill-level l1">L1 原子 Skill</span>
+        <div class="skill-desc">对指定站点执行 SEO 审计，生成优化建议报告。</div>
+        <div class="skill-reqs">需要: Umami, LiteLLM</div>
+        <div class="skill-footer">
+          <button class="btn" style="font-size:12px">已安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">64 人使用</span>
+        </div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">📊</div>
+        <div class="skill-name">weekly-report</div>
+        <span class="skill-level l2">L2 复合 Skill</span>
+        <div class="skill-desc">自动收集各项目数据，生成周报并推送到指定渠道。</div>
+        <div class="skill-reqs">需要: Umami, Uptime Kuma, LiteLLM</div>
+        <div class="skill-footer">
+          <button class="btn btn-primary" style="font-size:12px">安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">89 人使用</span>
+        </div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">🛡</div>
+        <div class="skill-name">ssl-renew</div>
+        <span class="skill-level l1">L1 原子 Skill</span>
+        <div class="skill-desc">检查并自动续期 SSL 证书，确保所有站点 HTTPS 正常。</div>
+        <div class="skill-reqs">需要: Traefik</div>
+        <div class="skill-footer">
+          <button class="btn" style="font-size:12px">已安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">312 人使用</span>
+        </div>
+      </div>
+      <div class="skill-card">
+        <div class="skill-icon">📝</div>
+        <div class="skill-name">ops-oncall</div>
+        <span class="skill-level l3">L3 角色 Skill</span>
+        <div class="skill-desc">7×24 运维值守：监控告警、自动恢复、事件升级。可替代人工 On-Call。</div>
+        <div class="skill-reqs">需要: Uptime Kuma, LiteLLM, Paperclip</div>
+        <div class="skill-footer">
+          <button class="btn btn-primary" style="font-size:12px">安装</button>
+          <span style="font-size:11px;color:var(--text-muted)">45 人使用</span>
+        </div>
+      </div>
+    </div>
+  `,
+
+  knowledge: `
+    <div class="page-header">
+      <div class="page-title">知识</div>
+      <div class="page-actions">
+        <div class="view-toggle">
+          <button class="active">文档</button>
+          <button>知识库</button>
+          <button>模板</button>
+        </div>
+      </div>
+    </div>
+    <div class="knowledge-layout">
+      <div class="doc-tree">
+        <div class="tree-item active">📁 帮助中心</div>
+        <div class="tree-item">📄 快速入门</div>
+        <div class="tree-item">📄 安装 Agent</div>
+        <div class="tree-item">📄 招聘员工</div>
+        <div class="tree-item">📁 项目文档</div>
+        <div class="tree-item">📄 my-saas</div>
+        <div class="tree-item">📄 blog</div>
+        <div class="tree-item">📁 SOP</div>
+        <div class="tree-item">📄 部署流程</div>
+        <div class="tree-item">📄 应急响应</div>
+      </div>
+      <div class="doc-editor">
+        <h1>支付模块集成方案</h1>
+        <p>我们使用 Stripe API 作为主要支付网关，同时保留支付宝和微信支付作为本地化备选方案。</p>
+        <blockquote>
+          /agent 支付模块的 webhook 签名验证如何实现？
+        </blockquote>
+        <div class="ai-reply">
+          <div class="ai-reply-label">🤖 Dev Agent 回复</div>
+          <div class="ai-reply-text">Stripe webhook 签名验证使用 <code>stripe.webhooks.constructEvent()</code> 方法。需要在环境变量中配置 <code>STRIPE_WEBHOOK_SECRET</code>，然后在中间件层验证请求头中的 <code>stripe-signature</code> 字段。建议在 Traefik 层面也配置 webhook 路由的白名单。</div>
+          <div class="ai-reply-actions">
+            <button class="btn btn-primary" style="font-size:12px;padding:4px 12px">采纳</button>
+            <button class="btn" style="font-size:12px;padding:4px 12px">追问</button>
+          </div>
+        </div>
+        <p>当前架构下，支付流程如下：</p>
+        <p>1. 前端调用 <code>/api/checkout</code> 创建 Stripe Checkout Session</p>
+        <p>2. 用户完成支付后，Stripe 发送 webhook 到 <code>/api/webhook/stripe</code></p>
+        <p>3. 后端验证签名后更新订单状态</p>
+      </div>
+    </div>
+  `,
+
+  analytics: `
+    <div class="page-header">
+      <div class="page-title">数据</div>
+      <div class="page-actions">
+        <div class="view-toggle">
+          <button class="active">7天</button>
+          <button>30天</button>
+          <button>90天</button>
+        </div>
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">访客</div>
+        <div class="metric-value">5,620</div>
+        <div class="metric-change up">↑ 14%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">页面浏览</div>
+        <div class="metric-value">18,400</div>
+        <div class="metric-change up">↑ 9%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">跳出率</div>
+        <div class="metric-value">38%</div>
+        <div class="metric-change down">↓ 3%</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">平均时长</div>
+        <div class="metric-value">3m45s</div>
+        <div class="metric-change up">↑ 22s</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">访客趋势</div>
+      <div class="chart-placeholder" id="trendChart"></div>
+    </div>
+    <div class="half-col">
+      <div class="panel">
+        <div class="panel-title">页面排名</div>
+        <div class="page-rank-item"><span class="page-rank-path">/pricing</span><span class="page-rank-val">3,420</span></div>
+        <div class="page-rank-item"><span class="page-rank-path">/features</span><span class="page-rank-val">2,180</span></div>
+        <div class="page-rank-item"><span class="page-rank-path">/docs/getting-started</span><span class="page-rank-val">1,840</span></div>
+        <div class="page-rank-item"><span class="page-rank-path">/blog/react-patterns</span><span class="page-rank-val">1,320</span></div>
+        <div class="page-rank-item"><span class="page-rank-path">/signup</span><span class="page-rank-val">980</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">来源分布</div>
+        <div class="task-item"><div class="task-info"><div class="task-name">Google</div></div><div class="task-percent">45%</div></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">直接访问</div></div><div class="task-percent">28%</div></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">Twitter/X</div></div><div class="task-percent">12%</div></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">GitHub</div></div><div class="task-percent">9%</div></div>
+        <div class="task-item"><div class="task-info"><div class="task-name">其他</div></div><div class="task-percent">6%</div></div>
+      </div>
+    </div>
+  `,
+
+  settings: `
+    <div class="page-header">
+      <div class="page-title">设置</div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">🖥 服务器</div>
+      <div class="panel">
+        <div class="server-grid">
+          <div class="server-card" style="display:flex;justify-content:space-between;align-items:start">
+            <div><div class="server-name">prod-server-01</div><div style="font-size:11px;color:var(--text-muted)">192.168.1.10 · Docker</div></div>
+            <span class="tag green">在线</span>
+          </div>
+          <div class="server-card" style="display:flex;justify-content:space-between;align-items:start">
+            <div><div class="server-name">prod-server-02</div><div style="font-size:11px;color:var(--text-muted)">192.168.1.11 · Docker</div></div>
+            <span class="tag green">在线</span>
+          </div>
+          <div class="server-card" style="display:flex;justify-content:space-between;align-items:start">
+            <div><div class="server-name">staging-server</div><div style="font-size:11px;color:var(--text-muted)">192.168.1.20 · Docker</div></div>
+            <span class="tag green">在线</span>
+          </div>
+          <div class="server-card" style="display:flex;justify-content:space-between;align-items:start">
+            <div><div class="server-name">backup-server</div><div style="font-size:11px;color:var(--text-muted)">192.168.1.30 · Docker</div></div>
+            <span class="tag yellow">告警</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">🤖 AI 模型</div>
+      <div class="panel">
+        <div class="settings-row">
+          <div class="settings-label">Claude Sonnet 4<small>Anthropic · 旗舰模型</small></div>
+          <div class="settings-value"><span class="tag green">可用</span></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Claude Haiku 4.5<small>Anthropic · 经济模型</small></div>
+          <div class="settings-value"><span class="tag green">可用</span></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">GPT-4o<small>OpenAI · 备选模型</small></div>
+          <div class="settings-value"><span class="tag yellow">延迟高</span></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">DeepSeek V3<small>DeepSeek · 低成本模型</small></div>
+          <div class="settings-value"><span class="tag red">不可用</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-group-title">🔗 集成状态</div>
+      <div class="panel">
+        <div class="settings-row">
+          <div class="settings-label">Paperclip<small>Agent 管理 & 项目</small></div>
+          <div class="settings-value"><span class="tag green">已连接</span> <div class="toggle on"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Traefik<small>反向代理 & 路由</small></div>
+          <div class="settings-value"><span class="tag green">已连接</span> <div class="toggle on"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Uptime Kuma<small>可用性监控</small></div>
+          <div class="settings-value"><span class="tag green">已连接</span> <div class="toggle on"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">LiteLLM<small>AI 模型网关</small></div>
+          <div class="settings-value"><span class="tag green">已连接</span> <div class="toggle on"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Umami<small>网站分析</small></div>
+          <div class="settings-value"><span class="tag yellow">延迟</span> <div class="toggle on"></div></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-label">Novu<small>通知推送</small></div>
+          <div class="settings-value"><span class="tag red">未安装</span> <div class="toggle"></div></div>
+        </div>
+      </div>
+    </div>
+  `
+};
+
+let currentPage = 'dashboard';
+
+function showPage(page) {
+  currentPage = page;
+  // Update nav tabs
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.page === page));
+  // Update sidebar
+  document.getElementById('sidebar').innerHTML = sidebars[page] || '';
+  // Update main content
+  document.getElementById('mainContent').innerHTML = pages[page] || '';
+  // Re-render chart if analytics
+  if (page === 'analytics') renderChart();
+}
+
+function showProjectDetail() {
+  showPage('projectDetail');
+  // Use projects sidebar for detail
+  document.getElementById('sidebar').innerHTML = sidebars.projects;
+}
+
+function renderChart() {
+  const chart = document.getElementById('trendChart');
+  if (!chart) return;
+  const values = [65, 40, 55, 70, 85, 45, 90, 60, 75, 50, 80, 95, 55, 70];
+  const max = Math.max(...values);
+  chart.innerHTML = values.map(v => {
+    const h = (v / max * 90);
+    const hue = 250 + (v / max * 30);
+    return `<div class="chart-bar" style="height:${h}%;background:hsl(${hue},60%,55%)"></div>`;
+  }).join('');
+}
+
+// Nav tab clicks
+document.getElementById('navTabs').addEventListener('click', e => {
+  if (e.target.classList.contains('nav-tab')) {
+    showPage(e.target.dataset.page);
+  }
+});
+
+// Sidebar item clicks
+document.getElementById('sidebar').addEventListener('click', e => {
+  const item = e.target.closest('.sidebar-item');
+  if (item) {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+  }
+  const btn = e.target.closest('.sidebar-btn');
+  if (btn) {
+    alert('此功能尚未实现');
+  }
+});
+
+// Toggle clicks
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('toggle')) {
+    e.target.classList.toggle('on');
+  }
+});
+
+// Detail tab clicks
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('detail-tab')) {
+    const tabs = e.target.parentElement;
+    tabs.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+  }
+});
+
+// View toggle clicks
+document.addEventListener('click', e => {
+  const toggle = e.target.closest('.view-toggle');
+  if (toggle && e.target.tagName === 'BUTTON') {
+    toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+  }
+});
+
+// Approval buttons
+document.addEventListener('click', e => {
+  if (e.target.textContent === '批准') {
+    const card = e.target.closest('.approval-card');
+    card.style.opacity = '0.5';
+    card.innerHTML = '<div style="color:var(--green);font-size:13px;text-align:center;padding:8px">✓ 已批准</div>';
+  }
+  if (e.target.textContent === '拒绝') {
+    const card = e.target.closest('.approval-card');
+    card.style.opacity = '0.5';
+    card.innerHTML = '<div style="color:var(--red);font-size:13px;text-align:center;padding:8px">✗ 已拒绝</div>';
+  }
+});
+
+// Init
+showPage('dashboard');
+</script>
+</body>
+</html>
